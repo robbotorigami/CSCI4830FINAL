@@ -96,6 +96,14 @@ ImageMetaData* findByName(std::vector<ImageMetaData> &v, const char *fileName) {
 	}
 	return NULL;
 }
+bool containedInGroup(std::vector<std::vector<ImageMetaData*>*> &v, char *fileName) {
+	for (vector< vector<ImageMetaData*>* >::iterator j = v.begin(); j < v.end(); j++) {
+		for (vector<ImageMetaData*>::iterator k = (*j)->begin(); k < (*j)->end(); k++) {
+			if (strcmp((*k)->fileName, fileName) == 0) return true;
+		}
+	}
+	return false;
+}
 
 
 void groupsToFile(std::vector<std::vector<ImageMetaData*>*> &v, char *fileName) {

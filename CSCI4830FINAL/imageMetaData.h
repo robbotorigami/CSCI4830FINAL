@@ -17,6 +17,7 @@ struct ImageMetaData {
 
 
 ImageMetaData* findByName(std::vector<ImageMetaData> &v, const char *fileName);
+bool containedInGroup(std::vector<std::vector<ImageMetaData*>*> &v, char *fileName);
 
 void metaDataToFile(std::vector<ImageMetaData> &v, char *fileName);
 void metaDataFromFile(std::vector<ImageMetaData> &v, char *fileName);
