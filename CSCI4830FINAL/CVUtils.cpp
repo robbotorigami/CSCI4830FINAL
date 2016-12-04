@@ -5,6 +5,7 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <vector>
+#include <set>
 
 using namespace cv;
 using namespace std;
@@ -13,6 +14,7 @@ using namespace std;
 #define MAX_NPIX 250000.0
 #define INLIER_THRESH 2.5f
 
+#define HIST_THRESH 0.3f
 #define KEYPOINT_THRESH 0.040
 #define HOMOGRAPHY_THRESH 0.020
 
@@ -70,6 +72,22 @@ ImageMetaData computeDescriptors(char* fileName) {
 }
 
 bool duplicateDetect(ImageMetaData &imd1, ImageMetaData &imd2) {
+	//-----------------QUICK PASS HISTOGRAM COMPARE------------------
+	Mat img1, img2;
+	cvtColor(imread(imd1.fileName), img1, COLOR_BGR2HSV);
+	cvtColor(imread(imd2.fileName), img2, COLOR_BGR2HSV);
+	MatND hist_img1;
+	MatND hist_img2;
+	int channels[] = { 0,1 };
+	int histSize[] = { 50,60 };
+	float h_ranges[] = { 0, 180 };
+	float s_ranges[] = { 0, 256 };
+	const float* ranges[] = { h_ranges, s_ranges };
+	calcHist(&img1, 1, channels, Mat(), hist_img1, 2, histSize, ranges, true, false);
+	calcHist(&img2, 1, channels, Mat(), hist_img2, 2, histSize, ranges, true, false);
+	float comparisonValue = compareHist(hist_img1, hist_img2, CV_COMP_CORREL);
+	if (comparisonValue < HIST_THRESH) return false;
+
 	BFMatcher matcher(NORM_HAMMING);
 	vector< vector<DMatch> > nn_matches;
 	matcher.knnMatch(imd1.descriptors, imd2.descriptors, nn_matches, 2);
@@ -78,22 +96,26 @@ bool duplicateDetect(ImageMetaData &imd1, ImageMetaData &imd2) {
 	vector<Point2f> pt1, pt2;
 	vector<DMatch> good_matches;
 
+	//set<int> used_indices;
+
 	for (size_t i = 0; i < nn_matches.size(); i++) {
 		DMatch first = nn_matches[i][0];
 		float dist1 = nn_matches[i][0].distance;
 		float dist2 = nn_matches[i][1].distance;
 
-		if (dist1 < 0.8f * dist2) {
+		if (dist1 < 0.8f * dist2 /*&& used_indices.find(first.trainIdx) == used_indices.end()*/) {
 			int new_i = static_cast<int>(kp1.size());
 			kp1.push_back(imd1.keypoints[first.queryIdx]);
 			kp2.push_back(imd2.keypoints[first.trainIdx]);
 			pt1.push_back(imd1.keypoints[first.queryIdx].pt);
 			pt2.push_back(imd2.keypoints[first.trainIdx].pt);
+			//used_indices.insert(first.trainIdx);
 		}
 	}
+	if (pt1.size() == 0) return false;
 
 	Mat H = findHomography(pt1, pt2, CV_RANSAC);
-	
+	if (H.empty()) return false;
 	for (int i = 0; i < kp1.size(); i++) {
 		Mat col = Mat::ones(3, 1, CV_64F);
 		col.at<double>(0) = kp1[i].pt.x;
@@ -133,10 +155,10 @@ bool duplicateDetect(ImageMetaData &imd1, ImageMetaData &imd2) {
 
 	float keypointRatio = static_cast<float>(kp1.size() * 2) / (imd1.keypoints.size() + imd2.keypoints.size());
 	successful = successful && (keypointRatio > KEYPOINT_THRESH);
-	printf("Successful keypoint matches: %.2f%%\n", keypointRatio*100);
+	//printf("Successful keypoint matches: %.2f%%\n", keypointRatio*100);
 	float homographyRatio = static_cast<float>(inliers1.size() * 2) / (imd1.keypoints.size() + imd2.keypoints.size());
 	successful = successful && (homographyRatio > HOMOGRAPHY_THRESH);
-	printf("Successful homography matches: %.2f%%\n", homographyRatio * 100);
+	//printf("Successful homography matches: %.2f%%\n", homographyRatio * 100);
 
 	if (successful) {
 		Mat outImage;

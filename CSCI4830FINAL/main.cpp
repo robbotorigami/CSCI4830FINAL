@@ -15,7 +15,7 @@
 #define FOLDER_PATH "C:/Users/Cyborg9/Documents/PhotoSorter_images/"
 
 #define testImage1 FOLDER_PATH "20160601_111931.jpg"
-#define testImage2 FOLDER_PATH "20160706_111438.jpg"
+#define testImage2 FOLDER_PATH "20160601_112831.jpg"
 
 #define META_DATA_CACHE_FILENAME "C:/Users/Cyborg9/Documents/PhotoSorter_images/imageMetaData.dat"
 //#define DUMP_CACHE
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 
 	FindClose(hFind);
 
-
+	//---------------USED CACHED FEATURES, OR DETECT NEW--------------
 	while (fileList.size() > 0) {
 		char *fileName = fileList.front();
 		bool neededToLoad = true;
@@ -77,16 +77,42 @@ int main(int argc, char** argv)
 	//Cache that data!
 	metaDataToFile(imageList, META_DATA_CACHE_FILENAME);
 
-
-	ImageMetaData* imd1 = findByName(imageList, testImage1);
-	ImageMetaData* imd2 = findByName(imageList, testImage2);
-	if (imd1 == NULL || imd2 == NULL) {
-		printf("Image not found!\n");
-		return -1;
-	}
-	for (vector<ImageMetaData>::iterator i = imageList.begin(); i < imageList.end(); i++) {
-		duplicateDetect(*imd1, *i);
-	}
+	//ImageMetaData* imd1 = findByName(imageList, testImage1);
+	//ImageMetaData* imd2 = findByName(imageList, testImage2);
+	//if (imd1 == NULL || imd2 == NULL) {
+	//	printf("Image not found!\n");
+	//	return -1;
+	//}
 	//duplicateDetect(*imd1, *imd2);
+	//return 0;
+
+	//---------------NOW COMPARE IMAGES TO EACH OTHER------------------
+	vector< vector<ImageMetaData> > imageGroups;
+	for (vector<ImageMetaData>::iterator i = imageList.begin(); i < imageList.end(); i++) {
+		for (vector< vector<ImageMetaData> >::iterator j = imageGroups.begin(); j < imageGroups.end(); j++) {
+			for (vector<ImageMetaData>::iterator k = j->begin(); k < j->end(); k++) {
+				if (duplicateDetect(*i, *k)) {
+					(*j).push_back(*i);
+					goto match_found;
+				}
+			}
+		}
+		{	
+			vector<ImageMetaData> dummy;
+			dummy.push_back(*i);
+			imageGroups.push_back(dummy);
+		}
+	match_found:
+		printf("Percent Complete: %f%%\n", 100*static_cast<float>((i-imageList.begin()))/imageList.size());
+	}
+
+	//---------------PRINT OUT THE GROUPS-----------------------
+	for (vector< vector<ImageMetaData> >::iterator j = imageGroups.begin(); j < imageGroups.end(); j++) {
+		printf("GROUP UNDER: %s\n", (*j->begin()).fileName);
+		for (vector<ImageMetaData>::iterator k = j->begin()+1; k < j->end(); k++) {
+			printf("\tITEM: %s\n", (*k).fileName);
+		}
+	}
+	system("PAUSE");
 	return 0;
 }
