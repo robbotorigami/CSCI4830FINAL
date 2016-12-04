@@ -15,5 +15,11 @@ struct ImageMetaData {
 	void fromFile(std::ifstream &fin);
 };
 
+
+ImageMetaData* findByName(std::vector<ImageMetaData> &v, const char *fileName);
+
 void metaDataToFile(std::vector<ImageMetaData> &v, char *fileName);
 void metaDataFromFile(std::vector<ImageMetaData> &v, char *fileName);
+
+void groupsToFile(std::vector<std::vector<ImageMetaData*>*> &v, char *fileName);
+void groupsFromFile(std::vector<std::vector<ImageMetaData*>*> &v, char *fileName, std::vector<ImageMetaData> &data);

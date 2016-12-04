@@ -87,3 +87,43 @@ void metaDataFromFile(vector<ImageMetaData> &v, char* fileName) {
 		v.push_back(imd);
 	}
 }
+
+ImageMetaData* findByName(std::vector<ImageMetaData> &v, const char *fileName) {
+	for (vector<ImageMetaData>::iterator i = v.begin(); i < v.end(); i++) {
+		if (strcmp(i->fileName, fileName) == 0) {
+			return &*i;
+		}
+	}
+	return NULL;
+}
+
+
+void groupsToFile(std::vector<std::vector<ImageMetaData*>*> &v, char *fileName) {
+	ofstream fout(fileName, ios::out | ios::binary);
+	size_t size = v.size();
+	fout.write(reinterpret_cast<char*>(&size), sizeof(size_t));
+	for (vector<vector<ImageMetaData*>*>::iterator i = v.begin(); i < v.end(); i++) {
+		size = (*i)->size();
+		fout.write(reinterpret_cast<char*>(&size), sizeof(size_t));
+		for (vector<ImageMetaData*>::iterator j = (*i)->begin(); j < (*i)->end(); j++) {
+			fout.write((*j)->fileName, sizeof((*j)->fileName));
+		}
+	}
+}
+
+void groupsFromFile(std::vector<std::vector<ImageMetaData*>*> &v, char *fileName, std::vector<ImageMetaData> &data) {
+	ifstream fin(fileName, ios::in | ios::binary);
+	size_t size;
+	fin.read(reinterpret_cast<char*>(&size), sizeof(size_t));
+	for (size_t i = 0; i < size; i++) {
+		vector<ImageMetaData*>* dummy = new vector<ImageMetaData*>();
+		size_t numInGroup;
+		fin.read(reinterpret_cast<char*>(&numInGroup), sizeof(size_t));
+		for (size_t j = 0; j < numInGroup; j++) {
+			char fileName[sizeof(ImageMetaData::fileName)];
+			fin.read(fileName, sizeof(fileName));
+			dummy->push_back(findByName(data, fileName));
+		}
+		v.push_back(dummy);
+	}
+}

@@ -26,15 +26,6 @@ using namespace std;
 
 #define MINIMUM_SPREAD 0.1
 
-ImageMetaData* findByName(std::vector<ImageMetaData> &v, const char *fileName) {
-	for (vector<ImageMetaData>::iterator i = v.begin(); i < v.end(); i++) {
-		if (strcmp(i->fileName, fileName) == 0) {
-			return &*i;
-		}
-	}
-	return NULL;
-}
-
 ImageMetaData computeDescriptors(char* fileName) {
 	Mat image = imread(fileName, IMREAD_GRAYSCALE);
 	size_t nPix = image.cols * image.rows;
