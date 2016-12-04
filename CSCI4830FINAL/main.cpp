@@ -14,8 +14,8 @@
 
 #define FOLDER_PATH "C:/Users/Cyborg9/Documents/PhotoSorter_images/"
 
-#define testImage1 FOLDER_PATH "20160601_111931.jpg"
-#define testImage2 FOLDER_PATH "20160601_112831.jpg"
+#define testImage1 FOLDER_PATH "20160601_111929.jpg"
+#define testImage2 FOLDER_PATH "0101.jpg"
 
 #define META_DATA_CACHE_FILENAME "C:/Users/Cyborg9/Documents/PhotoSorter_images/imageMetaData.dat"
 //#define DUMP_CACHE
@@ -84,22 +84,23 @@ int main(int argc, char** argv)
 	//	return -1;
 	//}
 	//duplicateDetect(*imd1, *imd2);
+	//system("PAUSE");
 	//return 0;
 
 	//---------------NOW COMPARE IMAGES TO EACH OTHER------------------
-	vector< vector<ImageMetaData> > imageGroups;
+	vector< vector<ImageMetaData*>* > imageGroups;
 	for (vector<ImageMetaData>::iterator i = imageList.begin(); i < imageList.end(); i++) {
-		for (vector< vector<ImageMetaData> >::iterator j = imageGroups.begin(); j < imageGroups.end(); j++) {
-			for (vector<ImageMetaData>::iterator k = j->begin(); k < j->end(); k++) {
-				if (duplicateDetect(*i, *k)) {
-					(*j).push_back(*i);
+		for (vector< vector<ImageMetaData*>* >::iterator j = imageGroups.begin(); j < imageGroups.end(); j++) {
+			for (vector<ImageMetaData*>::iterator k = (*j)->begin(); k < (*j)->end(); k++) {
+				if (duplicateDetect(*i, **k)) {
+					(*j)->push_back(&*i);
 					goto match_found;
 				}
 			}
 		}
 		{	
-			vector<ImageMetaData> dummy;
-			dummy.push_back(*i);
+			vector<ImageMetaData*>* dummy = new vector<ImageMetaData*>();
+			dummy->push_back(&*i);
 			imageGroups.push_back(dummy);
 		}
 	match_found:
@@ -107,12 +108,31 @@ int main(int argc, char** argv)
 	}
 
 	//---------------PRINT OUT THE GROUPS-----------------------
-	for (vector< vector<ImageMetaData> >::iterator j = imageGroups.begin(); j < imageGroups.end(); j++) {
-		printf("GROUP UNDER: %s\n", (*j->begin()).fileName);
-		for (vector<ImageMetaData>::iterator k = j->begin()+1; k < j->end(); k++) {
-			printf("\tITEM: %s\n", (*k).fileName);
+	for (vector< vector<ImageMetaData*>* >::iterator j = imageGroups.begin(); j < imageGroups.end(); j++) {
+		if ((*j)->size() <= 1) continue;
+		printf("GROUP UNDER: %s\n", (*(*j)->begin())->fileName);
+		for (vector<ImageMetaData*>::iterator k = (*j)->begin()+1; k < (*j)->end(); k++) {
+			printf("\tITEM: %s\n", (*k)->fileName);
+			namedWindow((*k)->fileName, WINDOW_AUTOSIZE);
+			Mat dispImage;
+			resize(imread((*k)->fileName), dispImage, (*k)->usedSize);
+			imshow((*k)->fileName, dispImage);
 		}
+		namedWindow((*(*j)->begin())->fileName, WINDOW_AUTOSIZE);
+		Mat dispImage;
+		resize(imread((*(*j)->begin())->fileName), dispImage, (*(*j)->begin())->usedSize);
+		imshow((*(*j)->begin())->fileName, dispImage);
+		waitKey(0);
+		destroyAllWindows();
 	}
 	system("PAUSE");
+
+
+	for (vector< vector<ImageMetaData*>* >::iterator j = imageGroups.begin(); j < imageGroups.end(); j++) {
+		for (vector<ImageMetaData*>::iterator k = (*j)->begin(); k < (*j)->end(); k++) {
+			delete *k;
+		}
+		delete *j;
+	}
 	return 0;
 }

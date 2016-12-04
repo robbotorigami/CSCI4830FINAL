@@ -1,3 +1,5 @@
 ﻿  CVUtils.cpp
+c:\users\cyborg9\documents\visual studio 2017\projects\csci4830final\csci4830final\cvutils.cpp(141): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\cyborg9\documents\visual studio 2017\projects\csci4830final\csci4830final\cvutils.cpp(142): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
   CSCI4830FINAL.vcxproj -> c:\users\cyborg9\documents\visual studio 2017\Projects\CSCI4830FINAL\x64\Debug\CSCI4830FINAL.exe
   CSCI4830FINAL.vcxproj -> c:\users\cyborg9\documents\visual studio 2017\Projects\CSCI4830FINAL\x64\Debug\CSCI4830FINAL.pdb (Partial PDB)
