@@ -14,7 +14,7 @@ using namespace std;
 #define MAX_NPIX 250000.0
 #define INLIER_THRESH 2.5f
 
-#define HIST_THRESH 0.3f
+#define HIST_THRESH 0.3
 #define KEYPOINT_THRESH 0.040
 #define HOMOGRAPHY_THRESH 0.020
 
@@ -71,22 +71,30 @@ ImageMetaData computeDescriptors(char* fileName) {
 	return imd;
 }
 
+bool* precomputeHistogramMatches(vector<ImageMetaData> &v) {
+	bool* table = reinterpret_cast<bool*>(malloc(v.size()*v.size()*sizeof(bool)));
+	for (vector<ImageMetaData>::iterator i = v.begin(); i < v.end(); i++) {
+		for (vector<ImageMetaData>::iterator j = v.begin(); j < v.end(); j++) {
+			Mat img1, img2;
+			cvtColor(imread((*i).fileName), img1, COLOR_BGR2HSV);
+			cvtColor(imread((*j).fileName), img2, COLOR_BGR2HSV);
+			MatND hist_img1;
+			MatND hist_img2;
+			int channels[] = { 0,1 };
+			int histSize[] = { 50,60 };
+			float h_ranges[] = { 0, 180 };
+			float s_ranges[] = { 0, 256 };
+			const float* ranges[] = { h_ranges, s_ranges };
+			calcHist(&img1, 1, channels, Mat(), hist_img1, 2, histSize, ranges, true, false);
+			calcHist(&img2, 1, channels, Mat(), hist_img2, 2, histSize, ranges, true, false);
+			double comparisonValue = compareHist(hist_img1, hist_img2, CV_COMP_CORREL);
+			table[(i-v.begin())*v.size() + (j-v.begin())] = (comparisonValue < HIST_THRESH);
+		}
+	}
+	return table;
+}
+
 bool duplicateDetect(ImageMetaData &imd1, ImageMetaData &imd2) {
-	//-----------------QUICK PASS HISTOGRAM COMPARE------------------
-	Mat img1, img2;
-	cvtColor(imread(imd1.fileName), img1, COLOR_BGR2HSV);
-	cvtColor(imread(imd2.fileName), img2, COLOR_BGR2HSV);
-	MatND hist_img1;
-	MatND hist_img2;
-	int channels[] = { 0,1 };
-	int histSize[] = { 50,60 };
-	float h_ranges[] = { 0, 180 };
-	float s_ranges[] = { 0, 256 };
-	const float* ranges[] = { h_ranges, s_ranges };
-	calcHist(&img1, 1, channels, Mat(), hist_img1, 2, histSize, ranges, true, false);
-	calcHist(&img2, 1, channels, Mat(), hist_img2, 2, histSize, ranges, true, false);
-	float comparisonValue = compareHist(hist_img1, hist_img2, CV_COMP_CORREL);
-	if (comparisonValue < HIST_THRESH) return false;
 
 	BFMatcher matcher(NORM_HAMMING);
 	vector< vector<DMatch> > nn_matches;
