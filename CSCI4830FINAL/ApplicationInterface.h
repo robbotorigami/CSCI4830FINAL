@@ -1,3 +1,7 @@
+/*
+	Class that implements the raw functionality needed for any application built on
+	top of this framework
+*/
 #pragma once
 
 #include <queue>

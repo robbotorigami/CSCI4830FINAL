@@ -70,6 +70,7 @@ ImageMetaData computeDescriptors(char* fileName) {
 	return imd;
 }
 
+//Defunct, unused
 bool* precomputeHistogramMatches(vector<ImageMetaData> &v) {
 	bool* table = reinterpret_cast<bool*>(malloc(v.size()*v.size()*sizeof(bool)));
 	for (vector<ImageMetaData>::iterator i = v.begin(); i < v.end(); i++) {
@@ -93,6 +94,7 @@ bool* precomputeHistogramMatches(vector<ImageMetaData> &v) {
 	return table;
 }
 
+//Maps a few points and tries to figure out if the homography is reasonable
 bool goodHomography(Mat &H, vector<KeyPoint> &kp1) {
 
 	float meanx = 0, meany = 0, count = 0;
@@ -123,6 +125,7 @@ bool goodHomography(Mat &H, vector<KeyPoint> &kp1) {
 	return success;
 }
 
+//returns true if images are duplicates
 bool duplicateDetect(ImageMetaData &imd1, ImageMetaData &imd2) {
 
 	BFMatcher matcher(NORM_HAMMING);
@@ -147,6 +150,7 @@ bool duplicateDetect(ImageMetaData &imd1, ImageMetaData &imd2) {
 			pt2.push_back(imd2.keypoints[first.trainIdx].pt);
 		}
 	}
+	//-----------------Attempt at using FLANN istead of brute force-------------------
 	//FlannBasedMatcher matcher;
 	//std::vector<DMatch> matches;
 	//vector<KeyPoint> kp1, kp2, inliers1, inliers2;
@@ -193,6 +197,7 @@ bool duplicateDetect(ImageMetaData &imd1, ImageMetaData &imd2) {
 		}
 	}
 
+	//--------------Display debug info-----------------------
 	//vector<Point2f> box(4);
 	//box[0] = cvPoint(0, 0);
 	//box[1] = cvPoint(image1.cols, 0);
@@ -218,6 +223,8 @@ bool duplicateDetect(ImageMetaData &imd1, ImageMetaData &imd2) {
 	float homographyRatio = static_cast<float>(inliers1.size() * 2) / (imd1.keypoints.size() + imd2.keypoints.size());
 	if (homographyRatio < HOMOGRAPHY_THRESH) return false;
 	//printf("Successful homography matches: %.2f%%\n", homographyRatio * 100);
+
+	//------------------STDDEV method to check if homography is good------------------------------
 	//successful = successful && (goodHomography(H, inliers1));
 	//float meanx1=0, meany1 = 0, meanx2 = 0, meany2 = 0, stdx1 = 0, stdx2 = 0, stdy1 = 0, stdy2 = 0;
 	//size_t i;
@@ -268,6 +275,7 @@ bool duplicateDetect(ImageMetaData &imd1, ImageMetaData &imd2) {
 	return true;
 }
 
+//Computes the "naturalness" of the image
 double computeNatureRank(char *fname) {
 	Mat src, dst;
 	src = imread(fname, IMREAD_GRAYSCALE);
@@ -321,6 +329,7 @@ double computeNatureRank(char *fname) {
 	return sum / (pow(src.size().height,2) + pow(src.size().width,2));
 }
 
+//Checks if the image matches the CascadeClassifer
 bool classifyImage(char* fname, CascadeClassifier &classifier) {
 	Mat image;
 	vector<Rect> detected;

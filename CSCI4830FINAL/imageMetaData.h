@@ -1,6 +1,9 @@
 #pragma once
 
 #include <opencv2/core/core.hpp>
+/*
+	Image meta data definition and helper functions for the caching system
+*/
 #include <stdlib.h>
 #include <vector>
 #include <fstream>

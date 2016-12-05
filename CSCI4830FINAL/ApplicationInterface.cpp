@@ -23,6 +23,7 @@ void ApplicationInterface::setFolderPath(char *folderPath) {
 	this->folderPath = folderPath;
 }
 
+//Loop through all of the files in the path, and add them to the file list
 void ApplicationInterface::index() {
 	//-----------------GET LIST OF IMAGES-----------------------
 	WIN32_FIND_DATAA ffd;
@@ -50,6 +51,7 @@ void ApplicationInterface::index() {
 	FindClose(hFind);
 }
 
+//Goes through all files, and computes keypoints and descriptors for uncached values
 void ApplicationInterface::loadMetaData(bool dumpCache) {
 	queue<char*> fileList;
 	for (vector<char*>::iterator i = this->fileList.begin(); i < this->fileList.end(); i++) fileList.push(*i);
@@ -83,6 +85,7 @@ void ApplicationInterface::loadMetaData(bool dumpCache) {
 	metaDataToFile(imageList, cachePath);
 }
 
+//Goes through all files, and sorts any uncached images
 void ApplicationInterface::computeDuplicates(bool dumpCache) {
 	char cachePath[100];
 	strcpy(cachePath, folderPath);
@@ -112,6 +115,7 @@ void ApplicationInterface::computeDuplicates(bool dumpCache) {
 	groupsToFile(imageGroups, cachePath);
 }
 
+//Display the images in each bin in bulk
 void ApplicationInterface::displayGroups() {
 	//---------------PRINT OUT THE GROUPS-----------------------
 	for (vector< vector<ImageMetaData*>* >::iterator j = imageGroups.begin(); j < imageGroups.end(); j++) {
@@ -137,6 +141,7 @@ bool rank_nm(natureImage nm1, natureImage nm2) {
 	return nm1.rank > nm2.rank;
 }
 
+//Computes the "Naturalness" of each image
 void ApplicationInterface::rankNatural() {
 	for (vector<char*>::iterator i = fileList.begin(); i < fileList.end(); i++) {
 		natureImage nm;
@@ -147,6 +152,7 @@ void ApplicationInterface::rankNatural() {
 	natureRank.sort(rank_nm);
 }
 
+//Attempts to classify images using a cascadeclassifier
 void ApplicationInterface::cascadeClassify(string classifier) {
 	//-----------CLEAR ALL FILES------------
 	WIN32_FIND_DATAA ffd;
@@ -190,6 +196,7 @@ void ApplicationInterface::cascadeClassify(string classifier) {
 }
 
 
+//Places the natural ranks into a file
 void ApplicationInterface::writeOutRanks() {
 	//-----------CLEAR ALL FILES------------
 	WIN32_FIND_DATAA ffd;

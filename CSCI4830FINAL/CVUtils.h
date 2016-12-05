@@ -1,3 +1,6 @@
+/*
+	Useful functions that wrap the OpenCV Libraries
+*/
 #pragma once
 #include <opencv2/objdetect/objdetect.hpp>
 

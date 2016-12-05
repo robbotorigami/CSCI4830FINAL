@@ -4,6 +4,7 @@
 using namespace cv;
 using namespace std;
 
+//Write out all of the data in a binary format
 void ImageMetaData::toFile(ofstream &fout) {
 	fout.write(fileName, sizeof(fileName));
 
@@ -32,6 +33,7 @@ void ImageMetaData::toFile(ofstream &fout) {
 	fout.write(reinterpret_cast<char*>(&usedSize.height), sizeof(int));	
 }
 
+//Read in the data from a binary file
 void ImageMetaData::fromFile(ifstream &fin) {
 	fin.read(fileName, sizeof(fileName));
 
@@ -68,6 +70,7 @@ void ImageMetaData::fromFile(ifstream &fin) {
 	usedSize = Size(width, height);
 }
 
+//Loop over everything and cache it
 void metaDataToFile(vector<ImageMetaData> &v, char* fileName) {
 	ofstream fout(fileName, ios::out | ios::binary);
 	size_t size = v.size();
