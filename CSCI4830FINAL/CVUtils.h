@@ -10,4 +10,4 @@ bool duplicateDetect(ImageMetaData &imd1, ImageMetaData &imd2);
 
 double computeNatureRank(char* fname);
 
-bool classifyImage(ImageMetaData &imd1, cv::CascadeClassifier &classifier, std::vector<cv::Rect> &detected);
+bool classifyImage(char* fname, cv::CascadeClassifier &classifier);

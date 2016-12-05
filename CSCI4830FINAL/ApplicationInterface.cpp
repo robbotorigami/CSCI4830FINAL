@@ -145,23 +145,84 @@ void ApplicationInterface::rankNatural() {
 		natureRank.push_back(nm);
 	}
 	natureRank.sort(rank_nm);
-	namedWindow("disp");
-	for (list<natureImage>::iterator i = natureRank.begin(); i != natureRank.end(); i++) {
-		imshow("disp", imread((*i).fileName));
-		waitKey(500);
-	}
 }
 
 void ApplicationInterface::cascadeClassify(string classifier) {
+	//-----------CLEAR ALL FILES------------
+	WIN32_FIND_DATAA ffd;
+	char formatSpecifier[100];
+	strcpy(formatSpecifier, folderPath);
+	strcat(formatSpecifier, "/classified/*.jpg");
+	HANDLE hFind = FindFirstFileA(formatSpecifier, &ffd);
+
+	if (INVALID_HANDLE_VALUE != hFind)
+	{
+		do {
+			char* fileName = reinterpret_cast<char*>(
+				malloc(strlen(folderPath) + strlen(reinterpret_cast<char*>(ffd.cFileName)))
+				);
+			strcpy(fileName, folderPath);
+			strcat(fileName, "classified/");
+			strcat(fileName, reinterpret_cast<char*>(ffd.cFileName));
+			DeleteFileA(fileName);
+		} while (FindNextFileA(hFind, &ffd) != 0);
+		FindClose(hFind);
+	}
+
 	CascadeClassifier cascade;
 	classifier = folderPath + classifier;
 	if (!cascade.load(classifier)) {
 		printf("Bad classifier file: %s\n", classifier);
 		return;
 	}
-	for (vector<ImageMetaData>::iterator i = imageList.begin(); i < imageList.end(); i++) {
-		std::vector<Rect> detections;
-		classifyImage((*i), cascade, detections);
-		printf("Complete: %d/%d\n", (i - imageList.begin()), imageList.size());
+	int j = 0;
+	for (vector<char*>::iterator i = fileList.begin(); i < fileList.end(); i++) {
+		if (classifyImage((*i), cascade)) {
+			char fileName[200];
+			strcpy(fileName, folderPath);
+			strcat(fileName, "classified/");
+			sprintf(fileName + strlen(fileName), "%d.jpg", j);
+			CopyFileA((*i), fileName, false);
+			j++;
+		}
+		printf("Complete: %d/%d\n", (i - fileList.begin()), fileList.size());
 	}
+}
+
+
+void ApplicationInterface::writeOutRanks() {
+	//-----------CLEAR ALL FILES------------
+	WIN32_FIND_DATAA ffd;
+	char formatSpecifier[100];
+	strcpy(formatSpecifier, folderPath);
+	strcat(formatSpecifier, "/ranked/*.jpg");
+	HANDLE hFind = FindFirstFileA(formatSpecifier, &ffd);
+
+	if (INVALID_HANDLE_VALUE != hFind)
+	{
+		do {
+			char* fileName = reinterpret_cast<char*>(
+				malloc(strlen(folderPath) + strlen(reinterpret_cast<char*>(ffd.cFileName)))
+				);
+			strcpy(fileName, folderPath);
+			strcat(fileName, "ranked/");
+			strcat(fileName, reinterpret_cast<char*>(ffd.cFileName));
+			DeleteFileA(fileName);
+		} while (FindNextFileA(hFind, &ffd) != 0);
+		FindClose(hFind);
+	}
+
+	namedWindow("disp");
+	int j = 0;
+	for (list<natureImage>::iterator i = natureRank.begin(); i != natureRank.end(); i++) {
+		char fileName[200];
+		strcpy(fileName, folderPath);
+		strcat(fileName, "ranked/");
+		sprintf(fileName + strlen(fileName), "%d.jpg", j);
+		imshow("disp", imread((*i).fileName));
+		CopyFileA((*i).fileName, fileName, false);
+		waitKey(500);
+		j++;
+	}
+	destroyAllWindows();
 }

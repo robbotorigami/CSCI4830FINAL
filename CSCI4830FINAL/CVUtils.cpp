@@ -94,23 +94,6 @@ bool* precomputeHistogramMatches(vector<ImageMetaData> &v) {
 }
 
 bool goodHomography(Mat &H, vector<KeyPoint> &kp1) {
-	/*double a = H.at<double>(0, 0);
-	double b = H.at<double>(0, 1);
-	double c = H.at<double>(0, 2);
-	double d = H.at<double>(0, 0);
-	double e = H.at<double>(0, 1);
-	double f = H.at<double>(0, 2);
-
-	double scalex = sqrt(a*a + b*b);
-	double scaley = (a*e - b*d) / (scalex);
-	double shear = (a*d + b*e) / (a*e - b*d);
-	double theta = atan2(b, a);
-
-	bool success = true;
-	success = success && (scalex > HOMOGRAPHY_SCALE_THRESH_LOW) && (scalex < HOMOGRAPHY_SCALE_THRESH_HIGH);
-	success = success && (scaley > HOMOGRAPHY_SCALE_THRESH_LOW) && (scaley < HOMOGRAPHY_SCALE_THRESH_HIGH);
-	success = success && (theta > -HOMOGRAPHY_THETA_THRESH) && (theta < HOMOGRAPHY_THETA_THRESH);
-	return success;*/
 
 	float meanx = 0, meany = 0, count = 0;
 	for (vector<KeyPoint>::iterator i = kp1.begin(); i < kp1.end(); i++) {
@@ -192,118 +175,141 @@ bool duplicateDetect(ImageMetaData &imd1, ImageMetaData &imd2) {
 
 	Mat H = findHomography(pt1, pt2, CV_RANSAC);
 	if (H.empty()) return false;
-for (int i = 0; i < kp1.size(); i++) {
-	Mat col = Mat::ones(3, 1, CV_64F);
-	col.at<double>(0) = kp1[i].pt.x;
-	col.at<double>(1) = kp1[i].pt.y;
+	for (int i = 0; i < kp1.size(); i++) {
+		Mat col = Mat::ones(3, 1, CV_64F);
+		col.at<double>(0) = kp1[i].pt.x;
+		col.at<double>(1) = kp1[i].pt.y;
 
-	col = H * col;
-	col /= col.at<double>(2);
-	float dist = static_cast<float>(sqrt(pow(col.at<double>(0) - kp2[i].pt.x, 2) +
-		pow(col.at<double>(1) - kp2[i].pt.y, 2)));
+		col = H * col;
+		col /= col.at<double>(2);
+		float dist = static_cast<float>(sqrt(pow(col.at<double>(0) - kp2[i].pt.x, 2) +
+			pow(col.at<double>(1) - kp2[i].pt.y, 2)));
 
-	if (dist < INLIER_THRESH) {
-		int new_i = static_cast<int>(inliers1.size());
-		inliers1.push_back(kp1[i]);
-		inliers2.push_back(kp2[i]);
-		good_matches.push_back(DMatch(new_i, new_i, 0));
+		if (dist < INLIER_THRESH) {
+			int new_i = static_cast<int>(inliers1.size());
+			inliers1.push_back(kp1[i]);
+			inliers2.push_back(kp2[i]);
+			good_matches.push_back(DMatch(new_i, new_i, 0));
+		}
 	}
-}
 
-//vector<Point2f> box(4);
-//box[0] = cvPoint(0, 0);
-//box[1] = cvPoint(image1.cols, 0);
-//box[2] = cvPoint(image1.cols, image1.rows);
-//box[3] = cvPoint(0, image1.rows);
-//vector<Point2f> map(4);
-//perspectiveTransform(box, map, H);
-//map[0] += Point2f(image1.cols, 0);
-//map[1] += Point2f(image1.cols, 0);
-//map[2] += Point2f(image1.cols, 0);
-//map[3] += Point2f(image1.cols, 0);
+	//vector<Point2f> box(4);
+	//box[0] = cvPoint(0, 0);
+	//box[1] = cvPoint(image1.cols, 0);
+	//box[2] = cvPoint(image1.cols, image1.rows);
+	//box[3] = cvPoint(0, image1.rows);
+	//vector<Point2f> map(4);
+	//perspectiveTransform(box, map, H);
+	//map[0] += Point2f(image1.cols, 0);
+	//map[1] += Point2f(image1.cols, 0);
+	//map[2] += Point2f(image1.cols, 0);
+	//map[3] += Point2f(image1.cols, 0);
 
-//line(outImage, map[0], map[1], Scalar(0, 255, 0));
-//line(outImage, map[1], map[2], Scalar(0, 255, 0));
-//line(outImage, map[2], map[3], Scalar(0, 255, 0));
-//line(outImage, map[3], map[0], Scalar(0, 255, 0));
+	//line(outImage, map[0], map[1], Scalar(0, 255, 0));
+	//line(outImage, map[1], map[2], Scalar(0, 255, 0));
+	//line(outImage, map[2], map[3], Scalar(0, 255, 0));
+	//line(outImage, map[3], map[0], Scalar(0, 255, 0));
 
-if (inliers1.size() < MINIMUM_KEYPOINTS) return false;
+	if (inliers1.size() < MINIMUM_KEYPOINTS) return false;
 
-float keypointRatio = static_cast<float>(kp1.size() * 2) / (imd1.keypoints.size() + imd2.keypoints.size());
-if (keypointRatio < KEYPOINT_THRESH) return false;
-//printf("Successful keypoint matches: %.2f%%\n", keypointRatio*100);
-float homographyRatio = static_cast<float>(inliers1.size() * 2) / (imd1.keypoints.size() + imd2.keypoints.size());
-if (homographyRatio < HOMOGRAPHY_THRESH) return false;
-//printf("Successful homography matches: %.2f%%\n", homographyRatio * 100);
-//successful = successful && (goodHomography(H, inliers1));
-//float meanx1=0, meany1 = 0, meanx2 = 0, meany2 = 0, stdx1 = 0, stdx2 = 0, stdy1 = 0, stdy2 = 0;
-//size_t i;
-//for (i = 0; i < inliers1.size(); i++) {
-//	meanx1 += inliers1[i].pt.x;
-//	meany1 += inliers1[i].pt.y;
-//	meanx2 += inliers2[i].pt.x;
-//	meany2 += inliers2[i].pt.y;
-//}
-//meanx1 /= i;
-//meany1 /= i;
-//meanx2 /= i;
-//meany2 /= i;
+	float keypointRatio = static_cast<float>(kp1.size() * 2) / (imd1.keypoints.size() + imd2.keypoints.size());
+	if (keypointRatio < KEYPOINT_THRESH) return false;
+	//printf("Successful keypoint matches: %.2f%%\n", keypointRatio*100);
+	float homographyRatio = static_cast<float>(inliers1.size() * 2) / (imd1.keypoints.size() + imd2.keypoints.size());
+	if (homographyRatio < HOMOGRAPHY_THRESH) return false;
+	//printf("Successful homography matches: %.2f%%\n", homographyRatio * 100);
+	//successful = successful && (goodHomography(H, inliers1));
+	//float meanx1=0, meany1 = 0, meanx2 = 0, meany2 = 0, stdx1 = 0, stdx2 = 0, stdy1 = 0, stdy2 = 0;
+	//size_t i;
+	//for (i = 0; i < inliers1.size(); i++) {
+	//	meanx1 += inliers1[i].pt.x;
+	//	meany1 += inliers1[i].pt.y;
+	//	meanx2 += inliers2[i].pt.x;
+	//	meany2 += inliers2[i].pt.y;
+	//}
+	//meanx1 /= i;
+	//meany1 /= i;
+	//meanx2 /= i;
+	//meany2 /= i;
 
-//for (i = 0; i < inliers1.size(); i++) {
-//	stdx1 += pow(inliers1[i].pt.x - meanx1, 2);
-//	stdy1 += pow(inliers1[i].pt.y - meany1, 2);
-//	stdx2 += pow(inliers2[i].pt.x - meanx2, 2);
-//	stdy2 += pow(inliers2[i].pt.y - meany2, 2);
-//}
-//stdx1 /= i;
-//stdx1 = sqrt(stdx1);
-//stdy1 /= i;
-//stdy1 = sqrt(stdy1);
-//stdx2 /= i;
-//stdx2 = sqrt(stdx2);
-//stdy2 /= i;
-//stdy2 = sqrt(stdy2);
+	//for (i = 0; i < inliers1.size(); i++) {
+	//	stdx1 += pow(inliers1[i].pt.x - meanx1, 2);
+	//	stdy1 += pow(inliers1[i].pt.y - meany1, 2);
+	//	stdx2 += pow(inliers2[i].pt.x - meanx2, 2);
+	//	stdy2 += pow(inliers2[i].pt.y - meany2, 2);
+	//}
+	//stdx1 /= i;
+	//stdx1 = sqrt(stdx1);
+	//stdy1 /= i;
+	//stdy1 = sqrt(stdy1);
+	//stdx2 /= i;
+	//stdx2 = sqrt(stdx2);
+	//stdy2 /= i;
+	//stdy2 = sqrt(stdy2);
 
-//if (stdx1 / imd1.usedSize.width < MINIMUM_SPREAD) return false;
-//if (stdx2 / imd1.usedSize.width < MINIMUM_SPREAD) return false;
-//if (stdy1 / imd1.usedSize.height < MINIMUM_SPREAD) return false;
-//if (stdy2 / imd1.usedSize.height < MINIMUM_SPREAD) return false;
+	//if (stdx1 / imd1.usedSize.width < MINIMUM_SPREAD) return false;
+	//if (stdx2 / imd1.usedSize.width < MINIMUM_SPREAD) return false;
+	//if (stdy1 / imd1.usedSize.height < MINIMUM_SPREAD) return false;
+	//if (stdy2 / imd1.usedSize.height < MINIMUM_SPREAD) return false;
 
-if (!goodHomography(H, inliers1)) return false;
+	if (!goodHomography(H, inliers1)) return false;
 
-Mat outImage;
-Mat image1, image2;
-resize(imread(imd1.fileName), image1, imd1.usedSize);
-resize(imread(imd2.fileName), image2, imd2.usedSize);
-drawMatches(image1, inliers1, image2, inliers2, good_matches, outImage);
+	Mat outImage;
+	Mat image1, image2;
+	resize(imread(imd1.fileName), image1, imd1.usedSize);
+	resize(imread(imd2.fileName), image2, imd2.usedSize);
+	drawMatches(image1, inliers1, image2, inliers2, good_matches, outImage);
 
-destroyWindow("Homography points");
-namedWindow("Homography points", WINDOW_AUTOSIZE);
-imshow("Homography points", outImage);
-waitKey(10);
+	destroyWindow("Homography points");
+	namedWindow("Homography points", WINDOW_AUTOSIZE);
+	imshow("Homography points", outImage);
+	waitKey(10);
 
-return true;
+	return true;
 }
 
 double computeNatureRank(char *fname) {
-	Mat src, dst, cdst;
+	Mat src, dst;
 	src = imread(fname, IMREAD_GRAYSCALE);
 	size_t nPix = src.cols * src.rows;
 
-	//If the image is too big, scale it down
+	//If the image is too big, scale it down.
+	Size newSize;
 	if (nPix > MAX_NPIX) {
 		Mat dst;
-		Size newSize(static_cast<int>(src.cols * sqrt(MAX_NPIX / nPix)),
+		newSize = Size(static_cast<int>(src.cols * sqrt(MAX_NPIX / nPix)),
 			static_cast<int>(src.rows * sqrt(MAX_NPIX / nPix)));
 		resize(src, dst, newSize);
 		src = dst;
 	}
+	else {
+		newSize = src.size();
+	}
 
 	Canny(src, dst, 100, 300, 3);
-	cvtColor(dst, cdst, CV_GRAY2BGR);
 	vector<Vec4i> lines;
 	HoughLinesP(dst, lines, 1, CV_PI / 180, 50, 50, 10);
 
+	int bins[36] = { 0 };
+
+	for (size_t i = 0; i < lines.size(); i++) {
+		Vec4i l = lines[i];
+		double angle = atan2(l[3] - l[1], l[2] - l[0]);
+		if (angle > 360) angle -= 360;
+		if (angle < 0) angle += 360;
+		int anglei = static_cast<int>(angle) % 180;
+		bins[anglei / 5]++;
+	}
+
+	double sum = 0;
+	for (size_t i = 0; i < 36; i++) {
+		sum += sqrt(static_cast<double>(bins[i]));
+	}
+
+
+	/*
+	src = imread(fname, IMREAD_COLOR);
+	resize(src, src, newSize);
 	for (size_t i = 0; i < lines.size(); i++)
 	{
 		Vec4i l = lines[i];
@@ -311,20 +317,21 @@ double computeNatureRank(char *fname) {
 	}
 	namedWindow("Nature?", WINDOW_FREERATIO);
 	imshow("Nature?", src);
-	waitKey(100);
-	return static_cast<double>(lines.size()) / (pow(src.size().height,2) + pow(src.size().width,2));
+	waitKey(500); */
+	return sum / (pow(src.size().height,2) + pow(src.size().width,2));
 }
 
-bool classifyImage(ImageMetaData &imd1, CascadeClassifier &classifier, vector<Rect> &detected) {
+bool classifyImage(char* fname, CascadeClassifier &classifier) {
 	Mat image;
-	cvtColor(imread(imd1.fileName), image, COLOR_BGR2GRAY);
+	vector<Rect> detected;
+	cvtColor(imread(fname), image, COLOR_BGR2GRAY);
 	//resize(image, image, imd1.usedSize);
 	equalizeHist(image, image);
 	classifier.detectMultiScale(image, detected);
 
 	if (detected.size() != 0){
 		//Display the image
-		Mat outImage = imread(imd1.fileName);
+		Mat outImage = imread(fname);
 		//resize(outImage, outImage, imd1.usedSize);
 		for (size_t i = 0; i < detected.size(); i++) {
 			Point center(detected[i].x + detected[i].width / 2, detected[i].y + detected[i].height / 2);

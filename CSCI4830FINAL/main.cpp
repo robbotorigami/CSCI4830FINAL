@@ -8,6 +8,7 @@
 #include <cstdio>
 
 #include "ApplicationInterface.h"
+#include "CVUtils.h"
 
 
 
@@ -82,12 +83,15 @@ int main(int argc, char** argv)
 			if (input.find("groups") != std::string::npos) {
 				ap.displayGroups();
 			}
+			else if (input.find("ranks") != std::string::npos) {
+				ap.writeOutRanks();
+			}
 			else {
 				printf("Usage: display <groups>\n");
 			}
 		}
 		else if (input.find("classify") != std::string::npos) {
-			ap.cascadeClassify("haarcascade_upperbody.xml");
+			ap.cascadeClassify("cascade.xml");
 		}
 		else if (input.find("rank") != std::string::npos) {
 			ap.rankNatural();
@@ -99,7 +103,7 @@ int main(int argc, char** argv)
 			break;
 		}
 		else {
-			printf("Commands: display <groups>, compute [-d] <keypoints | groups>, quit \n");
+			printf("Commands: index, compute [-d] <keypoints | groups>, rank, classify, display <groups>,  quit \n");
 		}
 	}
 

@@ -48,6 +48,7 @@ public:
 	void computeDuplicates(bool dumpCache);
 	void displayGroups();
 	void rankNatural();
+	void writeOutRanks();
 
 	void cascadeClassify(std::string classifier);
 
